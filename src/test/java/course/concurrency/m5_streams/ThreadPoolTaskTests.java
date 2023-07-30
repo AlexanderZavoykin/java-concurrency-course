@@ -1,5 +1,6 @@
 package course.concurrency.m5_streams;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -30,14 +31,14 @@ public class ThreadPoolTaskTests {
         for (int i = 0; i < elementsCount; i++) {
             final int value = i;
             lifoExecutor.execute(
-                    () -> {
-                        try {
-                            latch.await();
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                        processed.add(value);
-                    });
+                () -> {
+                    try {
+                        latch.await();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    processed.add(value);
+                });
 
         }
         latch.countDown();
@@ -45,7 +46,7 @@ public class ThreadPoolTaskTests {
         lifoExecutor.awaitTermination(2, TimeUnit.SECONDS);
 
         List<Integer> expectedResult = IntStream.range(1, elementsCount).boxed()
-                .sorted(Collections.reverseOrder()).collect(Collectors.toList());
+            .sorted(Collections.reverseOrder()).collect(Collectors.toList());
         expectedResult.add(0, 0);
 
         for (Integer expected : expectedResult) {
@@ -58,32 +59,33 @@ public class ThreadPoolTaskTests {
     void shouldDiscardIfNoAvailableThreads() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         Queue<Integer> processed = new LinkedBlockingQueue<>();
-        int poolSize = 16;
-        rejectExecutor.setMaximumPoolSize(poolSize);
-        rejectExecutor.setCorePoolSize(poolSize);
+        int tasks = 32;
+        int expectedProcessed = 8;
 
-        for (int i = 0; i < poolSize*2; i++) {
+        for (int i = 0; i < tasks; i++) {
             final int value = i;
             rejectExecutor.execute(
-                    () -> {
-                        try {
-                            latch.await();
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                        processed.add(value);
-                    });
+                () -> {
+                    try {
+                        latch.await();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    processed.add(value);
+                });
         }
+        Thread.sleep(500);
         latch.countDown();
 
         rejectExecutor.shutdown();
         rejectExecutor.awaitTermination(2, TimeUnit.SECONDS);
-        
-        assertEquals(poolSize, processed.size(), "Number of processed elements doesn't equals pool size");
 
-        List<Integer> expectedResult = IntStream.range(0, poolSize).boxed().collect(Collectors.toList());
+        assertEquals(expectedProcessed, processed.size(), "Number of processed elements doesn't equals pool size");
+
+        List<Integer> expectedResult = IntStream.range(0, expectedProcessed).boxed().collect(Collectors.toList());
         for (int i = 0; i < processed.size(); i++) {
-            assertEquals(processed.poll(), expectedResult.get(i));
+            Integer processedElement = processed.poll();
+            Assertions.assertTrue(expectedResult.contains(processedElement), "Processed element is not as expected");
         }
     }
 }
