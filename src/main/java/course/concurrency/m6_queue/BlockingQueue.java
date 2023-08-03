@@ -6,4 +6,6 @@ public interface BlockingQueue<T> {
 
     T dequeue();
 
+    int size();
+
 }

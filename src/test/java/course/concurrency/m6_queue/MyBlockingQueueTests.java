@@ -16,10 +16,28 @@ public class MyBlockingQueueTests {
         int maxSize = 5;
         BlockingQueue<String> queue = new MyBlockingQueue<>(maxSize);
 
+        Assertions.assertEquals(0, queue.size());
+
         String element = "some";
         queue.enqueue(element);
 
+        Assertions.assertEquals(1, queue.size());
         Assertions.assertEquals(element, queue.dequeue());
+        Assertions.assertEquals(0, queue.size());
+    }
+
+    @Test
+    @DisplayName("Add elements, then check that polled element is the last added one")
+    public void dequeueLastElement() {
+        int maxSize = 5;
+        BlockingQueue<String> queue = new MyBlockingQueue<>(maxSize);
+
+        queue.enqueue("first");
+
+        String last = "last";
+        queue.enqueue(last);
+
+        Assertions.assertEquals(last, queue.dequeue());
     }
 
     @Test
@@ -34,8 +52,12 @@ public class MyBlockingQueueTests {
 
         final String element = "some";
 
+        Assertions.assertEquals(5, queue.size());
+
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> queue.enqueue(element));
+
+        Assertions.assertEquals(5, queue.size());
 
         Thread.sleep(500); // wait a little before poll element
         Assertions.assertEquals("4", queue.dequeue());
@@ -57,8 +79,11 @@ public class MyBlockingQueueTests {
             () -> Assertions.assertEquals(element, queue.dequeue()) // assertion will be accomplished after queue is unblocked
         );
 
-        Thread.sleep(2000); // wait a little before put something to queue
+        Assertions.assertEquals(0, queue.size());
+
+        Thread.sleep(1000); // wait a little before put something to queue
         queue.enqueue(element);
+        Assertions.assertEquals(1, queue.size());
     }
 
     @Test
@@ -96,7 +121,7 @@ public class MyBlockingQueueTests {
         latch.await();
 
         Assertions.assertNotNull(queue.dequeue());
-
+        Assertions.assertEquals(1, queue.size());
     }
 
 

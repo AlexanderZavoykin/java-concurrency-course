@@ -43,7 +43,7 @@ public class MyBlockingQueue<T> implements BlockingQueue<T> {
             T value;
 
             try {
-                value = list.getLast();
+                value = list.removeLast();
             } finally {
                 lock.unlock();
             }
@@ -53,6 +53,11 @@ public class MyBlockingQueue<T> implements BlockingQueue<T> {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public int size() {
+        return list.size();
     }
 
 }
