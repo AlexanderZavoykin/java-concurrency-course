@@ -98,7 +98,7 @@ public class MyBlockingQueueTests {
 
         CountDownLatch latch = new CountDownLatch(operationNum * 2 + 1);
 
-        for (int i = 0; i< operationNum * 2 ; i++) {
+        for (int i = 0; i < operationNum * 2; i++) {
             executor.submit(
                 () -> {
                     latch.countDown();
