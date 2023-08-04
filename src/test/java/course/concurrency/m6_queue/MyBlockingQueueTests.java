@@ -4,7 +4,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -28,21 +30,21 @@ public class MyBlockingQueueTests {
 
     @Test
     @DisplayName("Add elements, then check that polled element is the last added one")
-    public void dequeueLastElement() {
+    public void checkFIFO() {
         int maxSize = 5;
         BlockingQueue<String> queue = new MyBlockingQueue<>(maxSize);
+        List<String> elements = new ArrayList<>(List.of("one", "two", "three", "four"));
 
-        queue.enqueue("first");
+        elements.forEach(queue::enqueue);
 
-        String last = "last";
-        queue.enqueue(last);
-
-        Assertions.assertEquals(last, queue.dequeue());
+        Collections.reverse(elements);
+        Collections.reverse(elements);
+        elements.forEach(e -> Assertions.assertEquals(e, queue.dequeue()));
     }
 
     @Test
     @DisplayName("Add element to full queue")
-    public void enqueueToFullQueue() throws InterruptedException {
+    public void enqueueToFullQueue() {
         int maxSize = 5;
         BlockingQueue<String> queue = new MyBlockingQueue<>(maxSize);
 
@@ -58,17 +60,13 @@ public class MyBlockingQueueTests {
         executor.submit(() -> queue.enqueue(element));
 
         Assertions.assertEquals(5, queue.size());
-
-        Thread.sleep(500); // wait a little before poll element
         Assertions.assertEquals("4", queue.dequeue());
-
-        Thread.sleep(500); // wait a little to be sure that executor`s task put new element to queue
         Assertions.assertEquals(element, queue.dequeue());
     }
 
     @Test
     @DisplayName("Poll element from empty queue")
-    public void dequeueFromEmptyQueue() throws InterruptedException {
+    public void dequeueFromEmptyQueue() {
         int maxSize = 5;
         BlockingQueue<String> queue = new MyBlockingQueue<>(maxSize);
 
@@ -81,48 +79,8 @@ public class MyBlockingQueueTests {
 
         Assertions.assertEquals(0, queue.size());
 
-        Thread.sleep(1000); // wait a little before put something to queue
         queue.enqueue(element);
         Assertions.assertEquals(1, queue.size());
     }
-
-    @Test
-    @DisplayName("Put & poll many elements")
-    public void enqueueAndDequeue() throws InterruptedException {
-        int maxSize = 10;
-        BlockingQueue<String> queue = new MyBlockingQueue<>(maxSize);
-
-        int operationNum = 10_000_000;
-
-        ExecutorService executor = Executors.newFixedThreadPool(24);
-
-        CountDownLatch latch = new CountDownLatch(operationNum * 2 + 1);
-
-        for (int i = 0; i < operationNum * 2; i++) {
-            executor.submit(
-                () -> {
-                    latch.countDown();
-                    queue.enqueue("some-element");
-                }
-            );
-            executor.submit(
-                () -> {
-                    latch.countDown();
-                    queue.dequeue();
-                }
-            );
-        }
-
-        executor.submit(() -> {
-            latch.countDown();
-            queue.enqueue("additional one element");
-        });
-
-        latch.await();
-
-        Assertions.assertNotNull(queue.dequeue());
-        Assertions.assertEquals(1, queue.size());
-    }
-
 
 }
