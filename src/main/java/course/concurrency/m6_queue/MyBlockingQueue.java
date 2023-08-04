@@ -2,15 +2,14 @@ package course.concurrency.m6_queue;
 
 import java.util.LinkedList;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MyBlockingQueue<T> implements BlockingQueue<T> {
 
     private final LinkedList<T> list;
     private final Semaphore putSemaphore;
     private final Semaphore pollSemaphore;
-    private final Lock lock = new ReentrantLock();
+    private AtomicInteger size = new AtomicInteger(0);
 
     public MyBlockingQueue(int maxSize) {
         list = new LinkedList<>();
@@ -22,13 +21,8 @@ public class MyBlockingQueue<T> implements BlockingQueue<T> {
     public void enqueue(T value) {
         try {
             putSemaphore.acquire();
-            lock.lock();
-            try {
-                list.add(value);
-            } finally {
-                lock.unlock();
-            }
-
+            list.add(value);
+            size.incrementAndGet();
             pollSemaphore.release();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -39,15 +33,8 @@ public class MyBlockingQueue<T> implements BlockingQueue<T> {
     public T dequeue() {
         try {
             pollSemaphore.acquire();
-            lock.lock();
-            T value;
-
-            try {
-                value = list.removeLast();
-            } finally {
-                lock.unlock();
-            }
-
+            T value = list.removeLast();
+            size.decrementAndGet();
             putSemaphore.release();
             return value;
         } catch (InterruptedException e) {
@@ -57,7 +44,7 @@ public class MyBlockingQueue<T> implements BlockingQueue<T> {
 
     @Override
     public int size() {
-        return list.size();
+        return size.get();
     }
 
 }

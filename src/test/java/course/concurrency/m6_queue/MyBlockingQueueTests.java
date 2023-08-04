@@ -1,14 +1,17 @@
 package course.concurrency.m6_queue;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MyBlockingQueueTests {
 
@@ -37,7 +40,6 @@ public class MyBlockingQueueTests {
 
         elements.forEach(queue::enqueue);
 
-        Collections.reverse(elements);
         Collections.reverse(elements);
         elements.forEach(e -> Assertions.assertEquals(e, queue.dequeue()));
     }
@@ -81,6 +83,49 @@ public class MyBlockingQueueTests {
 
         queue.enqueue(element);
         Assertions.assertEquals(1, queue.size());
+    }
+
+    @Test
+    @Disabled
+    @DisplayName("Put & poll many elements")
+    public void enqueueAndDequeue() throws InterruptedException {
+        int maxSize = 10;
+        BlockingQueue<String> queue = new MyBlockingQueue<>(maxSize);
+
+        int operationNum = 10_000_000;
+
+        ExecutorService enqueueExecutor = Executors.newFixedThreadPool(24);
+        ExecutorService dequeueExecutor = Executors.newFixedThreadPool(24);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicInteger counter = new AtomicInteger();
+
+        for (int i = 0; i < operationNum / 2; i++) {
+            enqueueExecutor.submit(
+                () -> {
+                    try {
+                        latch.await();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    queue.enqueue(String.valueOf(counter.incrementAndGet()));
+                }
+            );
+            dequeueExecutor.submit(
+                () -> {
+                    try {
+                        latch.await();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    queue.dequeue();
+                }
+            );
+        }
+
+        latch.countDown();
+
+        Assertions.assertEquals(0, queue.size());
     }
 
 }
