@@ -9,7 +9,7 @@ public class MyBlockingQueue<T> implements BlockingQueue<T> {
     private final LinkedList<T> list;
     private final Semaphore putSemaphore;
     private final Semaphore pollSemaphore;
-    private AtomicInteger size = new AtomicInteger(0);
+    private final AtomicInteger size = new AtomicInteger(0);
 
     public MyBlockingQueue(int maxSize) {
         list = new LinkedList<>();
