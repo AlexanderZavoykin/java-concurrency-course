@@ -1,12 +1,10 @@
 package course.concurrency.m6_queue;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -40,7 +38,6 @@ public class MyBlockingQueueTests {
 
         elements.forEach(queue::enqueue);
 
-        Collections.reverse(elements);
         elements.forEach(e -> Assertions.assertEquals(e, queue.dequeue()));
     }
 
@@ -62,8 +59,8 @@ public class MyBlockingQueueTests {
         executor.submit(() -> queue.enqueue(element));
 
         Assertions.assertEquals(5, queue.size());
-        Assertions.assertEquals("4", queue.dequeue());
-        Assertions.assertEquals(element, queue.dequeue());
+        Assertions.assertEquals("0", queue.dequeue());
+        Assertions.assertEquals(5, queue.size());
     }
 
     @Test
@@ -86,9 +83,8 @@ public class MyBlockingQueueTests {
     }
 
     @Test
-    @Disabled
     @DisplayName("Put & poll many elements")
-    public void enqueueAndDequeue() throws InterruptedException {
+    public void enqueueAndDequeue() {
         int maxSize = 10;
         BlockingQueue<String> queue = new MyBlockingQueue<>(maxSize);
 

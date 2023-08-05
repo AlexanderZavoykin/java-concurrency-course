@@ -33,7 +33,7 @@ public class MyBlockingQueue<T> implements BlockingQueue<T> {
     public T dequeue() {
         try {
             pollSemaphore.acquire();
-            T value = list.removeLast();
+            T value = list.removeFirst();
             size.decrementAndGet();
             putSemaphore.release();
             return value;
